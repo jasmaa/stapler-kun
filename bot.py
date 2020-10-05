@@ -2,6 +2,7 @@ import os
 import asyncio
 import datetime
 import discord
+import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,7 +13,6 @@ class Stapler(discord.Client):
 
     async def on_ready(self):
         print(f"Logged on as {self.user}")
-        self.msg_cache = []
         self.cache_lock = asyncio.Lock()
         self.loop.create_task(self.unpin_messages())
 
@@ -30,28 +30,65 @@ class Stapler(discord.Client):
                 if m.author != self.user and m.content != 'pin that':
                     async with self.cache_lock:
                         await m.pin()
-                        self.msg_cache.append({
-                            'message': m,
-                            'expires': datetime.datetime.now() + datetime.timedelta(1, 0),
-                        })
+
+                        expires = datetime.datetime.now() + datetime.timedelta(days=1)
+
+                        conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+                        cur = conn.cursor()
+                        cur.execute(
+                            "INSERT INTO messages (message_id, channel_id, expires) VALUES(%s, %s, %s)",
+                            (str(m.id), str(m.channel.id), expires),
+                        )
+                        conn.commit()
+                        conn.close()
+
                         print(f"Pinned: {m.content}")
                     return
-    
+
     async def unpin_messages(self):
         """Check and unpin expired messages from cache
         """
         while True:
             async with self.cache_lock:
-                now = datetime.datetime.now()
-                for pinned_msg in self.msg_cache:
-                    if now > pinned_msg['expires']:
-                        await pinned_msg['message'].unpin()
-                        self.msg_cache.remove(pinned_msg)
-                        print(f"Un-pinned: {pinned_msg['message'].content}")
+
+                conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT message_id, channel_id FROM messages WHERE expires < CURRENT_TIMESTAMP"
+                )
+                rows = cur.fetchall()
+
+                for message_id, channel_id in rows:
+                    # Unpin message
+                    channel = self.get_channel(int(channel_id))
+                    msg = await channel.fetch_message(int(message_id))
+                    await msg.unpin()
+                    print(f"Un-pinned: {msg.content}")
+
+                    # Remove from store
+                    cur.execute(
+                        "DELETE FROM messages WHERE channel_id=%s AND message_id=%s",
+                        (channel_id, message_id),
+                    )
+                conn.commit()
+                conn.close()
+
             await asyncio.sleep(86400)
 
 
 if __name__ == '__main__':
+
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+        cur = conn.cursor()
+        cur.execute(
+            "CREATE TABLE messages (message_id VARCHAR(255), channel_id VARCHAR(255), expires TIMESTAMP)")
+        conn.commit()
+        conn.close()
+        print("Created table")
+    except psycopg2.errors.DuplicateTable:
+        print("Table already created")
+
     client = Stapler()
     print('Starting bot...')
     client.run(os.getenv('DISCORD_TOKEN'))
