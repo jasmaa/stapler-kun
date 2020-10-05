@@ -92,5 +92,5 @@ if __name__ == '__main__':
         print("Table already created")
 
     client = Stapler()
-    #print('Starting bot...')
-    #client.run(os.getenv('DISCORD_TOKEN'))
+    print('Starting bot...')
+    client.run(os.getenv('DISCORD_TOKEN'))
