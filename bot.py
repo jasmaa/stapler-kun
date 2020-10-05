@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+database_url = os.getenv('DATABASE_URL')
+sslmode = os.getenv('SSLMODE', default='require')
+
 class Stapler(discord.Client):
     """Stapler bot
     """
@@ -33,7 +36,7 @@ class Stapler(discord.Client):
 
                         expires = datetime.datetime.now() + datetime.timedelta(days=1)
 
-                        conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+                        conn = psycopg2.connect(database_url, sslmode=sslmode)
                         cur = conn.cursor()
                         cur.execute(
                             "INSERT INTO messages (message_id, channel_id, expires) VALUES(%s, %s, %s)",
@@ -50,8 +53,7 @@ class Stapler(discord.Client):
         """
         while True:
             async with self.cache_lock:
-
-                conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+                conn = psycopg2.connect(database_url, sslmode=sslmode)
                 cur = conn.cursor()
                 cur.execute(
                     "SELECT message_id, channel_id FROM messages WHERE expires < CURRENT_TIMESTAMP"
@@ -79,7 +81,7 @@ class Stapler(discord.Client):
 if __name__ == '__main__':
 
     try:
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'), sslmode='require')
+        conn = psycopg2.connect(database_url, sslmode=sslmode)
         cur = conn.cursor()
         cur.execute(
             "CREATE TABLE messages (message_id VARCHAR(255), channel_id VARCHAR(255), expires TIMESTAMP)")
@@ -90,5 +92,5 @@ if __name__ == '__main__':
         print("Table already created")
 
     client = Stapler()
-    print('Starting bot...')
-    client.run(os.getenv('DISCORD_TOKEN'))
+    #print('Starting bot...')
+    #client.run(os.getenv('DISCORD_TOKEN'))
