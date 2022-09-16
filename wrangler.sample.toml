@@ -1,0 +1,9 @@
+name = "stapler-kun"
+main = "src/index.ts"
+compatibility_date = "2022-09-16"
+node_compat = true
+
+[vars]
+DISCORD_APPLICATION_ID = "<INSERT HERE>"
+DISCORD_PUBLIC_KEY = "<INSERT HERE>"
+DISCORD_TOKEN = "<INSERT HERE>"
