@@ -2,10 +2,11 @@
 
 Pins last message when user types `/pin`
 
-## Setup
+## Getting Started
+
+Follow instructions in [setup](./SETUP.md).
 
 ```
-wrangler secret put DISCORD_TOKEN
-wrangler secret put DISCORD_PUBLIC_KEY
-wrangler secret put DISCORD_APPLICATION_ID
+yarn install
+yarn start
 ```
