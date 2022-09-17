@@ -1,5 +1,6 @@
 import { Router, Method } from 'tiny-request-router';
 import { verifyKey, InteractionType, InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
+import { key2timestamp, timestamp2key } from './utils';
 
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -10,6 +11,8 @@ export interface Env {
 	//
 	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
 	// MY_BUCKET: R2Bucket;
+
+	PINS: KVNamespace;
 
 	DISCORD_APPLICATION_ID: string;
 	DISCORD_PUBLIC_KEY: string;
@@ -29,6 +32,7 @@ class JsonResponse extends Response {
 }
 
 const DISCORD_API_BASEURL = "https://discord.com/api/v10";
+const EXPIRATION_OFFSET_SECONDS = 86400;
 
 const router = new Router();
 
@@ -42,7 +46,7 @@ router.post('/', async (request: Request, env: Env) => {
 	if (message.type === InteractionType.PING) {
 		// The `PING` message is used during the initial webhook handshake, and is
 		// required to configure the webhook in the developer portal.
-		console.log('Handling Ping request');
+		console.log('handling Ping request');
 		return new JsonResponse({
 			type: InteractionResponseType.PONG,
 		});
@@ -107,6 +111,13 @@ router.post('/', async (request: Request, env: Env) => {
 				});
 			}
 
+			const expirationTime = Date.now() + 1000 * EXPIRATION_OFFSET_SECONDS;
+			const key = timestamp2key(expirationTime);
+			await env.PINS.put(key, JSON.stringify({
+				channelId,
+				messageId,
+			}));
+
 			return new JsonResponse({
 				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 				data: {
@@ -121,13 +132,46 @@ router.post('/', async (request: Request, env: Env) => {
 	}
 });
 
+async function handleScheduled(env: Env) {
+	let cursor;
+	const now = Date.now();
+	while (true) {
+		const listPinsRes: any = await env.PINS.list({ cursor });
+		for (const key of listPinsRes.keys) {
+			const timestamp = key2timestamp(key.name);
+			if (now >= timestamp) {
+				console.log(`deleting pin ${key.name}...`);
+				const getPinRes: any = await env.PINS.get(key.name, { type: 'json' });
+				const channelId = getPinRes.channelId;
+				const messageId = getPinRes.messageId;
+				// Makes best effort to unpin and deletes record
+				const unpinMessageRes = await fetch(`${DISCORD_API_BASEURL}/channels/${channelId}/pins/${messageId}`, {
+					method: 'delete',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bot ${env.DISCORD_TOKEN}`,
+					}
+				});
+				await env.PINS.delete(key.name);
+			} else {
+				// Short-circuit since timestamps are out of range
+				return;
+			}
+		}
+		cursor = listPinsRes.cursor;
+		if (!cursor) {
+			// Short-circuit since no more items to read
+			return;
+		}
+	}
+}
+
 export default {
 	async fetch(
 		request: Request,
 		env: Env,
 		ctx: ExecutionContext
 	): Promise<Response> {
-
 		if (request.method === 'POST') {
 			// Using the incoming headers, verify this request actually came from discord.
 			const signature = request.headers.get('x-signature-ed25519');
@@ -152,5 +196,15 @@ export default {
 		} else {
 			return new Response('Not found', { status: 404 });
 		}
+	},
+
+	async scheduled(
+		controller: ScheduledController,
+		env: Env,
+		ctx: ExecutionContext
+	): Promise<void> {
+		console.log('starting scheduled pin cleanup...');
+		await handleScheduled(env);
+		console.log('done!');
 	},
 };
