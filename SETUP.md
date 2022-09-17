@@ -46,7 +46,13 @@ python scripts/register.py
 ```
 
 
-## Setup KV namespaces
+## Setup secrets and KV namespaces
+
+Store `DISCORD_TOKEN` to secrets:
+
+```
+wrangler secret put DISCORD_TOKEN
+```
 
 Create `PIN` namespaces. These will provide namespace `preview_id` and `id`:
 
