@@ -1,5 +1,5 @@
 import { Router, Method } from 'tiny-request-router';
-import { verifyKey, InteractionType, InteractionResponseType } from 'discord-interactions';
+import { verifyKey, InteractionType, InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -28,6 +28,8 @@ class JsonResponse extends Response {
 	}
 }
 
+const DISCORD_API_BASEURL = "https://discord.com/api/v10";
+
 const router = new Router();
 
 router.get('/', (request: Request, env: Env) => {
@@ -36,7 +38,7 @@ router.get('/', (request: Request, env: Env) => {
 
 router.post('/', async (request: Request, env: Env) => {
 	const message: any = await request.json();
-	console.log(message);
+
 	if (message.type === InteractionType.PING) {
 		// The `PING` message is used during the initial webhook handshake, and is
 		// required to configure the webhook in the developer portal.
@@ -50,7 +52,7 @@ router.post('/', async (request: Request, env: Env) => {
 		case 'test': {
 			console.log('handling test request');
 			return new JsonResponse({
-				type: 4,
+				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 				data: {
 					content: 'this is a test response',
 				},
@@ -58,10 +60,58 @@ router.post('/', async (request: Request, env: Env) => {
 		}
 		case 'pin': {
 			console.log('handling pin request');
+			const channelId = message.channel_id;
+			const getMessagesRes = await fetch(`${DISCORD_API_BASEURL}/channels/${channelId}/messages`, {
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bot ${env.DISCORD_TOKEN}`,
+				}
+			});
+			if (getMessagesRes.status !== 200) {
+				return new JsonResponse({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						content: 'Could not pin message. Ran into an error...',
+						flags: InteractionResponseFlags.EPHEMERAL,
+					},
+				});
+			}
+
+			const getMessagesData: any[] = await getMessagesRes.json();
+			if (getMessagesData.length < 1) {
+				return new JsonResponse({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						content: 'Could not pin message. No messages to pin.',
+						flags: InteractionResponseFlags.EPHEMERAL,
+					},
+				});
+			}
+
+			const messageId = getMessagesData[0].id;
+
+			const pinMessageRes = await fetch(`${DISCORD_API_BASEURL}/channels/${channelId}/pins/${messageId}`, {
+				method: 'put',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bot ${env.DISCORD_TOKEN}`,
+				}
+			});
+			if (pinMessageRes.status !== 204) {
+				return new JsonResponse({
+					type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+					data: {
+						content: 'Could not pin message. Ran into an error...',
+						flags: InteractionResponseFlags.EPHEMERAL,
+					},
+				});
+			}
+
 			return new JsonResponse({
-				type: 4,
+				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
 				data: {
-					content: 'this is a pin response',
+					content: 'Done, boss!',
+					flags: InteractionResponseFlags.EPHEMERAL,
 				},
 			});
 		}
