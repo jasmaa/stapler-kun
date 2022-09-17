@@ -46,6 +46,16 @@ python scripts/register.py
 ```
 
 
+## Setup KV namespaces
+
+Create `PIN` namespaces. These will provide namespace `preview_id` and `id`:
+
+```
+wrangler kv:namespace create PINS --preview
+wrangler kv:namespace create PINS
+```
+
+
 ## Deploy Cloudflare worker
 
 Create `wrangler.toml` from `wrangler.sample.toml` and fill with credentials.
