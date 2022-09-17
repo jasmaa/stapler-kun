@@ -2,9 +2,5 @@
   {
     "name": "pin",
     "description": "Pins previous message"
-  },
-  {
-    "name": "test",
-    "description": "this is a test"
   }
 ]

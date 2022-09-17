@@ -53,15 +53,6 @@ router.post('/', async (request: Request, env: Env) => {
 	}
 
 	switch (message.data.name.toLowerCase()) {
-		case 'test': {
-			console.log('handling test request');
-			return new JsonResponse({
-				type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-				data: {
-					content: 'this is a test response',
-				},
-			});
-		}
 		case 'pin': {
 			console.log('handling pin request');
 			const channelId = message.channel_id;
