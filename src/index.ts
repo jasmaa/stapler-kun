@@ -1,6 +1,6 @@
 import { Router, Method } from 'tiny-request-router';
 import { verifyKey } from 'discord-interactions';
-import { handleDefault, handleInteraction, handleScheduled } from './handlers';
+import { handleDefault, handleInteraction, handleScheduledPinRemoval } from './handlers';
 import { Env } from './interfaces';
 
 const router = new Router();
@@ -18,6 +18,10 @@ export default {
 			const signature = request.headers.get('x-signature-ed25519');
 			const timestamp = request.headers.get('x-signature-timestamp');
 			const body = await request.clone().arrayBuffer();
+			if (!signature || !timestamp) {
+				console.error('Invalid Request');
+				return new Response('Bad request signature.', { status: 401 });
+			}
 			const isValidRequest = verifyKey(
 				body,
 				signature,
@@ -45,7 +49,7 @@ export default {
 		ctx: ExecutionContext
 	): Promise<void> {
 		console.log('starting scheduled pin cleanup...');
-		await handleScheduled(env);
+		await handleScheduledPinRemoval(env);
 		console.log('done!');
 	},
 };

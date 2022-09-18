@@ -91,15 +91,14 @@ export async function handleInteraction(request: Request, env: Env) {
   }
 }
 
-export async function handleScheduled(env: Env) {
+export async function handleScheduledPinRemoval(env: Env) {
   let cursor;
   const now = Date.now();
   while (true) {
     const listPinsRes: any = await env.PINS.list({ cursor });
     for (const key of listPinsRes.keys) {
       const timestamp = key2timestamp(key.name);
-      if (now >= timestamp) {
-        console.log(`deleting pin ${key.name}...`);
+      if (timestamp < now) {
         const getPinRes: any = await env.PINS.get(key.name, { type: 'json' });
         const channelId = getPinRes.channelId;
         const messageId = getPinRes.messageId;
