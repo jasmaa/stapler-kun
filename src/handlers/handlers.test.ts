@@ -1,7 +1,6 @@
 import { InteractionResponseFlags, InteractionResponseType, InteractionType } from "discord-interactions";
-import { DISCORD_API_BASEURL } from "./constants";
-import { handleDefault, handleInteraction, handleScheduledPinRemoval } from "./handlers";
-import { timestamp2key } from "./utils";
+import { handleDefault, handleInteraction, handleScheduledPinRemoval } from ".";
+import { timestamp2key } from "../utils";
 
 const env = getMiniflareBindings();
 
@@ -145,6 +144,27 @@ describe('test handleInteraction', () => {
 
     const listRes = await env.PINS.list();
     expect(listRes.keys.length).toBe(0);
+  });
+
+  it('when receive bear-fact command should respond with bear fact', async () => {
+    const req = new Request('http://localhost/', {
+      method: 'post',
+      body: JSON.stringify({
+        type: InteractionType.APPLICATION_COMMAND,
+        channel_id: channelId,
+        data: {
+          name: 'bear-fact',
+        },
+      })
+    });
+
+    const res = await handleInteraction(req, env);
+
+    const json: any = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(json.data.content).not.toBeFalsy();
+    expect(json.data.flags).toBeFalsy();
   });
 });
 
