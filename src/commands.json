@@ -4,6 +4,10 @@
     "description": "Pins previous message"
   },
   {
+    "name": "take",
+    "description": "Takes the stapler"
+  },
+  {
     "name": "staple",
     "description": "Staples"
   },

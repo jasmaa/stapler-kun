@@ -4,7 +4,8 @@ compatibility_date = "2022-09-16"
 node_compat = true
 
 kv_namespaces = [
-  { binding = "PINS", preview_id = "<INSERT HERE>", id = "<INSERT HERE>" }
+  { binding = "PINS", preview_id = "<INSERT HERE>", id = "<INSERT HERE>" },
+  { binding = "OWNERS", preview_id = "<INSERT HERE>", id = "<INSERT HERE>" }
 ]
 
 [triggers]

@@ -22,6 +22,7 @@ describe('test handleDefault', () => {
 });
 
 describe('test handleInteraction', () => {
+  const guildId = 'guild000';
   const channelId = 'channelId123';
   const messageId = 'messageId456';
 
@@ -145,6 +146,125 @@ describe('test handleInteraction', () => {
 
       const listRes = await env.PINS.list();
       expect(listRes.keys.length).toBe(0);
+    });
+  });
+
+  describe('test `take`', () => {
+    it('when receive take command when no owner should let sender take stapler', async () => {
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          guild_id: guildId,
+          channel_id: channelId,
+          member: { user: { username: 'alice' } },
+          data: {
+            name: 'take',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('alice has taken the stapler!')
+      expect(json.data.flags).toBeFalsy();
+
+      const getRes = await env.OWNERS.get(guildId);
+      expect(getRes).toBeTruthy();
+    });
+
+    it('when receive take command when sender is not owner should let sender take stapler from owner', async () => {
+      await env.OWNERS.put(guildId, JSON.stringify({
+        username: 'alice',
+        time: 0,
+      }));
+      const diff = Date.now(); // Date.now() - 0
+
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          guild_id: guildId,
+          channel_id: channelId,
+          member: { user: { username: 'bob' } },
+          data: {
+            name: 'take',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toContain(`bob has taken the stapler from alice! alice had the stapler for`)
+      expect(json.data.flags).toBeFalsy();
+    });
+
+    it('when receive take command when sender is already owner should tell sender that they are owner', async () => {
+      await env.OWNERS.put(guildId, JSON.stringify({
+        username: 'alice',
+        time: 0,
+      }));
+
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          guild_id: guildId,
+          channel_id: channelId,
+          member: { user: { username: 'alice' } },
+          data: {
+            name: 'take',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('You already have the stapler...')
+      expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+    });
+
+    it('when receive take command when different owner in another guild should not affect other guild', async () => {
+      const otherGuildId = 'gamingFunClub000';
+      await env.OWNERS.put(otherGuildId, JSON.stringify({
+        username: 'barbatos',
+        time: 0,
+      }));
+
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          guild_id: guildId,
+          channel_id: channelId,
+          member: { user: { username: 'alice' } },
+          data: {
+            name: 'take',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('alice has taken the stapler!')
+      expect(json.data.flags).toBeFalsy();
+
+      const getRes1 = await env.OWNERS.get(guildId);
+      expect(getRes1).toBeTruthy();
+      const getRes2 = await env.OWNERS.get(otherGuildId, { type: 'json' });
+      expect(getRes2.username).not.toBe('alice');
     });
   });
 

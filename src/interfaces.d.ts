@@ -9,6 +9,7 @@ export interface Env {
   // MY_BUCKET: R2Bucket;
 
   PINS: KVNamespace;
+  OWNERS: KVNamespace;
 
   DISCORD_APPLICATION_ID: string;
   DISCORD_PUBLIC_KEY: string;

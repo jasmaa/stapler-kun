@@ -2,7 +2,7 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { DISCORD_API_BASEURL, EXPIRATION_OFFSET_SECONDS } from '../constants';
 import { Env } from '../interfaces';
 import { JsonResponse } from '../response';
-import { timestamp2key } from '../utils';
+import { timestamp2key, milliseconds2text } from '../utils';
 import bearFacts from '../bear-facts';
 
 export async function handlePinInteraction(message: any, env: Env): Promise<JsonResponse> {
@@ -67,6 +67,48 @@ export async function handlePinInteraction(message: any, env: Env): Promise<Json
       flags: InteractionResponseFlags.EPHEMERAL,
     },
   });
+}
+
+export async function handleTakeInteraction(message: any, env: Env): Promise<JsonResponse> {
+  const guildId = message.guild_id;
+  const newOwner = message.member.user.username;
+  const getRes: any = await env.OWNERS.get(guildId, { type: 'json' });
+  const now = Date.now();
+  if (getRes) {
+    const previousOwner = getRes.username;
+    if (previousOwner === newOwner) {
+      return new JsonResponse({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `You already have the stapler...`,
+          flags: InteractionResponseFlags.EPHEMERAL,
+        },
+      });
+    } else {
+      await env.OWNERS.put(guildId, JSON.stringify({
+        username: newOwner,
+        time: now,
+      }));
+      const diff = now - getRes.time;
+      return new JsonResponse({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `${newOwner} has taken the stapler from ${previousOwner}! ${previousOwner} had the stapler for ${milliseconds2text(diff)}.`,
+        },
+      });
+    }
+  } else {
+    await env.OWNERS.put(guildId, JSON.stringify({
+      username: newOwner,
+      time: now,
+    }));
+    return new JsonResponse({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: `${newOwner} has taken the stapler!`,
+      },
+    });
+  }
 }
 
 export async function handleStapleInteraction(message: any, env: Env): Promise<JsonResponse> {

@@ -61,6 +61,14 @@ wrangler kv:namespace create PINS --preview
 wrangler kv:namespace create PINS
 ```
 
+Create `OWNERS` namespaces. These will provide namespace `preview_id` and `id`:
+
+```
+wrangler kv:namespace create OWNERS --preview
+wrangler kv:namespace create OWNERS
+```
+
+
 
 ## Deploy Cloudflare worker
 
