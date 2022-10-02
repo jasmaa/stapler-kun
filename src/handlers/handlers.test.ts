@@ -40,131 +40,158 @@ describe('test handleInteraction', () => {
     expect(json.type).toBe(InteractionResponseType.PONG);
   });
 
-  it('when receive pin command should pin previous message', async () => {
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
+  describe('test `pin`', () => {
+    it('when receive pin command should pin previous message', async () => {
+      const fetchMock = getMiniflareFetchMock();
+      fetchMock.disableNetConnect();
 
-    const origin = fetchMock.get('https://discord.com');
-    origin
-      .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
-      .reply(200, [
-        {
-          id: messageId,
-        }
-      ]);
-    origin
-      .intercept({ path: `/api/v10/channels/${channelId}/pins/${messageId}`, method: 'PUT' })
-      .reply(204);
+      const origin = fetchMock.get('https://discord.com');
+      origin
+        .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
+        .reply(200, [
+          {
+            id: messageId,
+          }
+        ]);
+      origin
+        .intercept({ path: `/api/v10/channels/${channelId}/pins/${messageId}`, method: 'PUT' })
+        .reply(204);
 
-    const req = new Request('http://localhost/', {
-      method: 'post',
-      body: JSON.stringify({
-        type: InteractionType.APPLICATION_COMMAND,
-        channel_id: channelId,
-        data: {
-          name: 'pin',
-        },
-      })
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          channel_id: channelId,
+          data: {
+            name: 'pin',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('Done, boss!');
+      expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(1);
     });
 
-    const res = await handleInteraction(req, env);
+    it('when receive pin command when no messages should respond with error', async () => {
+      const fetchMock = getMiniflareFetchMock();
+      fetchMock.disableNetConnect();
 
-    const json: any = await res.json();
-    expect(res.status).toBe(200);
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).toBe('Done, boss!');
-    expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+      const origin = fetchMock.get('https://discord.com');
+      origin
+        .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
+        .reply(200, []);
 
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(1);
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          channel_id: channelId,
+          data: {
+            name: 'pin',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('Could not pin message. No messages to pin.');
+      expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(0);
+    });
+
+    it('when receive pin command when channel not found should respond with error', async () => {
+      const fetchMock = getMiniflareFetchMock();
+      fetchMock.disableNetConnect();
+
+      const origin = fetchMock.get('https://discord.com');
+      origin
+        .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
+        .reply(404, {});
+      origin
+        .intercept({ path: `/api/v10/channels/${channelId}/pins/${messageId}`, method: 'PUT' })
+        .reply(204);
+
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          channel_id: channelId,
+          data: {
+            name: 'pin',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('Could not pin message. Ran into an error...');
+      expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
+
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(0);
+    });
   });
 
-  it('when receive pin command when no messages should respond with error', async () => {
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
+  describe('test `staple`', () => {
+    it('when receive staple command should stable', async () => {
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          channel_id: channelId,
+          data: {
+            name: 'staple',
+          },
+        })
+      });
 
-    const origin = fetchMock.get('https://discord.com');
-    origin
-      .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
-      .reply(200, []);
+      const res = await handleInteraction(req, env);
 
-    const req = new Request('http://localhost/', {
-      method: 'post',
-      body: JSON.stringify({
-        type: InteractionType.APPLICATION_COMMAND,
-        channel_id: channelId,
-        data: {
-          name: 'pin',
-        },
-      })
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).toBe('[stable](https://www.youtube.com/watch?v=YG2_wmWc_QY)')
+      expect(json.data.flags).toBeFalsy();
     });
-
-    const res = await handleInteraction(req, env);
-
-    const json: any = await res.json();
-    expect(res.status).toBe(200);
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).toBe('Could not pin message. No messages to pin.');
-    expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
-
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(0);
   });
 
-  it('when receive pin command when channel not found should respond with error', async () => {
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
+  describe('test `bear-fact`', () => {
+    it('when receive bear-fact command should respond with bear fact', async () => {
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          channel_id: channelId,
+          data: {
+            name: 'bear-fact',
+          },
+        })
+      });
 
-    const origin = fetchMock.get('https://discord.com');
-    origin
-      .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
-      .reply(404, {});
-    origin
-      .intercept({ path: `/api/v10/channels/${channelId}/pins/${messageId}`, method: 'PUT' })
-      .reply(204);
+      const res = await handleInteraction(req, env);
 
-    const req = new Request('http://localhost/', {
-      method: 'post',
-      body: JSON.stringify({
-        type: InteractionType.APPLICATION_COMMAND,
-        channel_id: channelId,
-        data: {
-          name: 'pin',
-        },
-      })
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).not.toBeFalsy();
+      expect(json.data.flags).toBeFalsy();
     });
-
-    const res = await handleInteraction(req, env);
-
-    const json: any = await res.json();
-    expect(res.status).toBe(200);
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).toBe('Could not pin message. Ran into an error...');
-    expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
-
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(0);
-  });
-
-  it('when receive bear-fact command should respond with bear fact', async () => {
-    const req = new Request('http://localhost/', {
-      method: 'post',
-      body: JSON.stringify({
-        type: InteractionType.APPLICATION_COMMAND,
-        channel_id: channelId,
-        data: {
-          name: 'bear-fact',
-        },
-      })
-    });
-
-    const res = await handleInteraction(req, env);
-
-    const json: any = await res.json();
-    expect(res.status).toBe(200);
-    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-    expect(json.data.content).not.toBeFalsy();
-    expect(json.data.flags).toBeFalsy();
   });
 });
 

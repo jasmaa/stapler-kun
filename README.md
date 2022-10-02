@@ -1,6 +1,6 @@
 # Stapler-kun
 
-Pins last message when user types `/pin`
+Personal multi-purpose Discord bot. For a list of commands, see [commands](./src/commands.json).
 
 ## Getting Started
 

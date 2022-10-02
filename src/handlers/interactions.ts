@@ -69,6 +69,16 @@ export async function handlePinInteraction(message: any, env: Env): Promise<Json
   });
 }
 
+export async function handleStapleInteraction(message: any, env: Env): Promise<JsonResponse> {
+  const videoUrl = 'https://www.youtube.com/watch?v=YG2_wmWc_QY';
+  return new JsonResponse({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `[stable](${videoUrl})`,
+    },
+  });
+}
+
 export async function handleBearFactInteraction(message: any, env: Env): Promise<JsonResponse> {
   const bearFact = bearFacts[Math.floor(Math.random() * bearFacts.length)];
   return new JsonResponse({

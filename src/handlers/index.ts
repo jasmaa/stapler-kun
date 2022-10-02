@@ -3,7 +3,7 @@ import { DISCORD_API_BASEURL } from "../constants";
 import { Env } from "../interfaces";
 import { JsonResponse } from "../response";
 import { key2timestamp } from "../utils";
-import { handleBearFactInteraction, handlePinInteraction } from "./interactions";
+import { handleBearFactInteraction, handlePinInteraction, handleStapleInteraction } from "./interactions";
 
 export function handleDefault(request: Request, env: Env) {
   return new Response(env.DISCORD_APPLICATION_ID);
@@ -25,6 +25,10 @@ export async function handleInteraction(request: Request, env: Env) {
     case 'pin': {
       console.log('handling pin request');
       return await handlePinInteraction(message, env);
+    }
+    case 'staple': {
+      console.log('handling staple request');
+      return await handleStapleInteraction(message, env);
     }
     case 'bear-fact': {
       console.log('handling bear-fact request');

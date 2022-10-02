@@ -4,6 +4,10 @@
     "description": "Pins previous message"
   },
   {
+    "name": "staple",
+    "description": "Staples"
+  },
+  {
     "name": "bear-fact",
     "description": "Gets a random bear fact"
   }
