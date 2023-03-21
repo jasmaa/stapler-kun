@@ -14,7 +14,7 @@
   "scripts": {
     "start": "wrangler dev",
     "deploy": "wrangler publish",
-    "test": "jest test"
+    "test": "jest"
   },
   "dependencies": {
     "discord-interactions": "^3.2.0",

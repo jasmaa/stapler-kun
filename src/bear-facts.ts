@@ -168,10 +168,6 @@ export default [
     "href": "https://www.factretriever.com/bear-facts"
   },
   {
-    "fact": "Of the eight bear species, four live in the Southern Hemisphere and four in the Northern Hemisphere.",
-    "href": "https://www.factretriever.com/bear-facts"
-  },
-  {
     "fact": "Spectacled bears are the only wild bears that live in South America.",
     "href": "https://www.factretriever.com/bear-facts"
   },
