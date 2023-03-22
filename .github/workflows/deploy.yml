@@ -1,0 +1,23 @@
+name: Test and deploy package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test using Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - run: yarn install --immutable --immutable-cache --check-cache
+      - run: yarn test
+      - name: Publish
+        uses: cloudflare/wrangler-action@2.0.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
