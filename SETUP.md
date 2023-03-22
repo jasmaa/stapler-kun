@@ -35,6 +35,33 @@ Check the following under Bot Permissions:
 Go to the generated URL and invite the bot to your server.
 
 
+## Setup secrets and KV namespaces
+
+Login to Cloudflare with:
+
+```
+wrangler login
+```
+
+Store `DISCORD_TOKEN` to secrets:
+
+```
+wrangler secret put DISCORD_TOKEN
+```
+
+Create `PIN` namespaces. The id will be `PINS_KV_NAMESPACE_ID`:
+
+```
+wrangler kv:namespace create PINS
+```
+
+Create `OWNERS` namespaces. The id will be `OWNERS_KV_NAMESPACE_ID`:
+
+```
+wrangler kv:namespace create OWNERS
+```
+
+
 ## Register commands
 
 Create `.env` from `sample.env` and fill with credentials.
@@ -46,38 +73,12 @@ python scripts/register.py
 ```
 
 
-## Setup secrets and KV namespaces
-
-Store `DISCORD_TOKEN` to secrets:
-
-```
-wrangler secret put DISCORD_TOKEN
-```
-
-Create `PIN` namespaces. These will provide namespace `preview_id` and `id`:
-
-```
-wrangler kv:namespace create PINS --preview
-wrangler kv:namespace create PINS
-```
-
-Create `OWNERS` namespaces. These will provide namespace `preview_id` and `id`:
-
-```
-wrangler kv:namespace create OWNERS --preview
-wrangler kv:namespace create OWNERS
-```
-
-
-
 ## Deploy Cloudflare worker
 
-Create `wrangler.toml` from `wrangler.sample.toml` and fill with credentials.
-
-Login to Cloudflare with:
+Create `wrangler.toml` with:
 
 ```
-wrangler login
+python scripts/generate-wrangler.py
 ```
 
 Deploy worker with:
