@@ -21,6 +21,4 @@ jobs:
       - run: python scripts/generate-wrangler.py
       - run: yarn install --immutable --immutable-cache --check-cache
       - run: yarn test
-      - uses: cloudflare/wrangler-action@2.0.0
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
+      - run: npx wrangler publish
