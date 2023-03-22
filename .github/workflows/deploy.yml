@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      PINS_KV_NAMESPACE_ID: ${{ secrets.PINS_KV_NAMESPACE_ID }}
+      OWNERS_KV_NAMESPACE_ID: ${{ secrets.OWNERS_KV_NAMESPACE_ID }}
+      DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
+      DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
     name: Deploy
     steps:
       - uses: actions/checkout@v3
@@ -23,5 +27,4 @@ jobs:
       - run: python scripts/generate-wrangler.py
       - run: yarn install --immutable --immutable-cache --check-cache
       - run: yarn test
-      - run: cat wrangler.toml
-      - run: npx wrangler publish
+      - run: npx wrangler publish > /dev/null
