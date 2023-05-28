@@ -70,3 +70,45 @@ export function milliseconds2text(milliseconds: number) {
     return textChunks.slice(0, textChunks.length - 1).join(', ') + `, and ${textChunks[textChunks.length - 1]}`;
   }
 }
+
+export function text2lines(text: string, lineBreak: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let line: string[] = [];
+  for (const w of words) {
+    const updatedLine = [...line, w];
+    const updatedLineLen = updatedLine.map((w) => w.length).reduce((a, b) => a + b, 0) + Math.max(updatedLine.length - 1, 0);
+    if (updatedLineLen > lineBreak) {
+      lines.push(line.join(' '));
+      line = [];
+    }
+    const subLines = word2lines(w, lineBreak);
+    if (subLines.length > 0) {
+      for (let i = 0; i < subLines.length - 1; i++) {
+        lines.push(subLines[i]);
+      }
+      line.push(subLines[subLines.length - 1]);
+    }
+  }
+  if (line.length > 0) {
+    lines.push(line.join(' '));
+  }
+  return lines;
+}
+
+function word2lines(text: string, lineBreak: number): string[] {
+  const lines: string[] = [];
+  let p = 0;
+  let q = 0;
+  while (q < text.length) {
+    if (q - p >= lineBreak) {
+      lines.push(text.slice(p, q));
+      p = q;
+    }
+    q++;
+  }
+  if (p < q) {
+    lines.push(text.slice(p, q));
+  }
+  return lines
+}

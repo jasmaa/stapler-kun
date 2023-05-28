@@ -14,5 +14,17 @@
   {
     "name": "bear-fact",
     "description": "Gets a random bear fact"
+  },
+  {
+    "name": "gikosay",
+    "description": "Makes Giko say something",
+    "options": [
+      {
+        "name": "text",
+        "description": "Text that Giko will say",
+        "type": 3,
+        "required": true
+      }
+    ]
   }
 ]

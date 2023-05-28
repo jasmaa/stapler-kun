@@ -3,7 +3,7 @@ import { DISCORD_API_BASEURL } from "../constants";
 import { Env } from "../interfaces";
 import { JsonResponse } from "../response";
 import { key2timestamp } from "../utils";
-import { handleBearFactInteraction, handlePinInteraction, handleStapleInteraction, handleTakeInteraction } from "./interactions";
+import { handleBearFactInteraction, handleGikosayInteraction, handlePinInteraction, handleStapleInteraction, handleTakeInteraction } from "./interactions";
 
 export function handleDefault(request: Request, env: Env) {
   return new Response(env.DISCORD_APPLICATION_ID);
@@ -37,6 +37,10 @@ export async function handleInteraction(request: Request, env: Env) {
     case 'bear-fact': {
       console.log('handling bear-fact request');
       return await handleBearFactInteraction(message, env);
+    }
+    case 'gikosay': {
+      console.log('handling gikosay request');
+      return await handleGikosayInteraction(message, env);
     }
     default:
       console.error('Unknown Command');

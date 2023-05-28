@@ -1,4 +1,4 @@
-import { milliseconds2text } from "./utils";
+import { milliseconds2text, text2lines } from "./utils";
 
 function timeConfig2milliseconds({
   hours,
@@ -69,5 +69,22 @@ describe('test milliseconds2text', () => {
       seconds: 20,
     }));
     expect(text).toBe('1 hour(s) and 20 second(s)');
+  });
+});
+
+
+describe('test text2lines', () => {
+  it.each([
+    'I am a cat. As yet I have no name.',
+    'Tu fui, ego eris',
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbb',
+    'Writing tests are for normies',
+  ])('breaks text="%s" into lines of length <= 10 when line break is 10', (text) => {
+    const lineBreak = 10;
+    const lines = text2lines(text, lineBreak);
+    for (const l of lines) {
+      expect(l.length).toBeLessThanOrEqual(lineBreak);
+    }
+    expect(lines.join('').replace(/\s/g, '')).toBe(text.replace(/\s/g, ''));
   });
 });

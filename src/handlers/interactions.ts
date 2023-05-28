@@ -2,7 +2,7 @@ import { InteractionResponseFlags, InteractionResponseType } from 'discord-inter
 import { DISCORD_API_BASEURL, EXPIRATION_OFFSET_SECONDS } from '../constants';
 import { Env } from '../interfaces';
 import { JsonResponse } from '../response';
-import { timestamp2key, milliseconds2text } from '../utils';
+import { timestamp2key, milliseconds2text, text2lines } from '../utils';
 import bearFacts from '../bear-facts';
 
 export async function handlePinInteraction(message: any, env: Env): Promise<JsonResponse> {
@@ -128,5 +128,49 @@ export async function handleBearFactInteraction(message: any, env: Env): Promise
     data: {
       content: `> ${bearFact.fact}`,
     },
+  });
+}
+
+export async function handleGikosayInteraction(message: any, env: Env): Promise<JsonResponse> {
+  const lineBreak = 35;
+  const textBubbleBreak = 20;
+
+  const text = message.data.options.find((option: any) => option.name === 'text').value;
+  const rawLines = text2lines(text, lineBreak);
+  const lines = rawLines.length === 0 ? [''] : rawLines;
+
+  const textBubbleParts = [
+    `　／${'￣'.repeat(textBubbleBreak)}`,
+    ...lines.map((part, idx) => {
+      if (idx < lines.length - 1) {
+        return `　| ${part.trim()}`;
+      } else {
+        return `＜　${part.trim()}`;
+      }
+    }),
+    `　＼${'＿'.repeat(textBubbleBreak)}`,
+  ];
+
+  const gikoParts = [
+    "　　　　＿＿＿_∧∧　",
+    "　～'　＿＿__(,,ﾟДﾟ)",
+    "　　 ＵU 　 　Ｕ U　",
+  ];
+
+  const diff = textBubbleParts.length - gikoParts.length;
+  for (let i = 0; i < diff; i++) {
+    gikoParts.splice(0, 0, "　　　　　　　　　　");
+  }
+
+  let content = '';
+  for (let i = 0; i < gikoParts.length; i++) {
+    content += gikoParts[i] + textBubbleParts[i] + '\n';
+  }
+
+  return new JsonResponse({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `\`\`\`\n${content}\n\`\`\``,
+    }
   });
 }
