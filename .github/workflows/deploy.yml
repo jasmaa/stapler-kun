@@ -14,6 +14,7 @@ jobs:
       OWNERS_KV_NAMESPACE_ID: ${{ secrets.OWNERS_KV_NAMESPACE_ID }}
       DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
       DISCORD_PUBLIC_KEY: ${{ secrets.DISCORD_PUBLIC_KEY }}
+      DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
     name: Deploy
     steps:
       - uses: actions/checkout@v3
