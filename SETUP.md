@@ -69,7 +69,7 @@ Create `.env` from `sample.env` and fill with credentials.
 In the repository root, run:
 
 ```
-python scripts/register.py
+yarn register-commands
 ```
 
 
@@ -78,7 +78,7 @@ python scripts/register.py
 Create `wrangler.toml` with:
 
 ```
-python scripts/generate-wrangler.py
+yarn generate-wrangler
 ```
 
 Deploy worker with:
