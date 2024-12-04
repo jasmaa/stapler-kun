@@ -23,7 +23,7 @@ export async function handlePinInteraction(message: any, env: Env): Promise<Json
     });
   }
 
-  const getMessagesData: any[] = await getMessagesRes.json();
+  const getMessagesData = await getMessagesRes.json() as any[];
   if (getMessagesData.length < 1) {
     return new JsonResponse({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

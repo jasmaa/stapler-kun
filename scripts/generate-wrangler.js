@@ -11,8 +11,8 @@ compatibility_date = "2022-09-16"
 node_compat = true
 
 kv_namespaces = [
-  {{ binding = "PINS", id = "${process.env.PINS_KV_NAMESPACE_ID}" }},
-  {{ binding = "OWNERS", id = "${process.env.OWNERS_KV_NAMESPACE_ID}" }}
+  { binding = "PINS", id = "${process.env.PINS_KV_NAMESPACE_ID}" },
+  { binding = "OWNERS", id = "${process.env.OWNERS_KV_NAMESPACE_ID}" }
 ]
 
 [triggers]
