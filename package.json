@@ -1,5 +1,5 @@
 {
-  "name": "stapler-kun-v2-ts-1",
+  "name": "stapler-kun",
   "version": "0.0.0",
   "devDependencies": {
     "@cloudflare/workers-types": "^3.16.0",
