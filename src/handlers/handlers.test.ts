@@ -1,12 +1,20 @@
 import { InteractionResponseFlags, InteractionResponseType, InteractionType } from "discord-interactions";
-import { handleDefault, handleInteraction, handleScheduledPinRemoval } from ".";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { env, fetchMock } from "cloudflare:test";
+import { Env } from "..";
 import { timestamp2key } from "../utils";
+import { handleDefault, handleInteraction, handleScheduledPinRemoval } from ".";
 
-const env = getMiniflareBindings();
+declare module "cloudflare:test" {
+  interface ProvidedEnv extends Env { }
+}
 
 beforeAll(() => {
-  jest.useFakeTimers();
-  jest.setSystemTime(1663516715115);
+  vi.useFakeTimers();
+  vi.setSystemTime(1663516715115);
+
+  fetchMock.activate();
+  fetchMock.disableNetConnect();
 });
 
 describe('test handleDefault', () => {
@@ -43,9 +51,6 @@ describe('test handleInteraction', () => {
 
   describe('test `pin`', () => {
     it('when receive pin command should pin previous message', async () => {
-      const fetchMock = getMiniflareFetchMock();
-      fetchMock.disableNetConnect();
-
       const origin = fetchMock.get('https://discord.com');
       origin
         .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
@@ -82,9 +87,6 @@ describe('test handleInteraction', () => {
     });
 
     it('when receive pin command when no messages should respond with error', async () => {
-      const fetchMock = getMiniflareFetchMock();
-      fetchMock.disableNetConnect();
-
       const origin = fetchMock.get('https://discord.com');
       origin
         .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
@@ -114,9 +116,6 @@ describe('test handleInteraction', () => {
     });
 
     it('when receive pin command when channel not found should respond with error', async () => {
-      const fetchMock = getMiniflareFetchMock();
-      fetchMock.disableNetConnect();
-
       const origin = fetchMock.get('https://discord.com');
       origin
         .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
@@ -263,7 +262,7 @@ describe('test handleInteraction', () => {
 
       const getRes1 = await env.OWNERS.get(guildId);
       expect(getRes1).toBeTruthy();
-      const getRes2 = await env.OWNERS.get(otherGuildId, { type: 'json' });
+      const getRes2 = await env.OWNERS.get(otherGuildId, { type: 'json' }) as { username: string, time: number };
       expect(getRes2.username).not.toBe('alice');
     });
   });
@@ -356,9 +355,6 @@ describe('test handleScheduledPinRemoval', () => {
       messageId: expiredRecord.messageId,
     }));
 
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
-
     const origin = fetchMock.get('https://discord.com');
     origin
       .intercept({ path: `/api/v10/channels/${expiredRecord.channelId}/pins/${expiredRecord.messageId}`, method: 'DELETE' })
@@ -373,9 +369,6 @@ describe('test handleScheduledPinRemoval', () => {
   });
 
   it('when namespace has no pins should not unpin', async () => {
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
-
     await handleScheduledPinRemoval(env);
 
     const listRes = await env.PINS.list();
@@ -391,9 +384,6 @@ describe('test handleScheduledPinRemoval', () => {
         }));
       }
     }
-
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
 
     const origin = fetchMock.get('https://discord.com');
     for (const record of records) {
@@ -415,9 +405,6 @@ describe('test handleScheduledPinRemoval', () => {
         messageId: record.messageId,
       }));
     }
-
-    const fetchMock = getMiniflareFetchMock();
-    fetchMock.disableNetConnect();
 
     const origin = fetchMock.get('https://discord.com');
     for (const record of records) {

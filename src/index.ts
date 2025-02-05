@@ -1,7 +1,24 @@
 import { Router, Method } from 'tiny-request-router';
 import { verifyKey } from 'discord-interactions';
 import { handleDefault, handleInteraction, handleScheduledPinRemoval } from './handlers';
-import { Env } from './interfaces';
+
+export interface Env {
+  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
+  // MY_KV_NAMESPACE: KVNamespace;
+  //
+  // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
+  // MY_DURABLE_OBJECT: DurableObjectNamespace;
+  //
+  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
+  // MY_BUCKET: R2Bucket;
+
+  PINS: KVNamespace;
+  OWNERS: KVNamespace;
+
+  DISCORD_APPLICATION_ID: string;
+  DISCORD_PUBLIC_KEY: string;
+  DISCORD_TOKEN: string;
+}
 
 const router = new Router();
 router.get('/', handleDefault);

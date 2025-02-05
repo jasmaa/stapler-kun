@@ -2,20 +2,18 @@
   "name": "stapler-kun",
   "version": "0.0.0",
   "devDependencies": {
-    "@cloudflare/workers-types": "^3.16.0",
-    "@types/jest": "^29.0.3",
+    "@cloudflare/vitest-pool-workers": "^0.6.12",
+    "@cloudflare/workers-types": "^4.20230717.1",
     "axios": "^1.7.8",
-    "jest": "^29.0.3",
-    "jest-environment-miniflare": "^2.9.0",
-    "ts-jest": "^29.0.1",
     "typescript": "^4.8.3",
+    "vitest": "^2.1.6",
     "wrangler": "^3.3.0"
   },
   "private": true,
   "scripts": {
     "start": "wrangler dev",
     "deploy": "wrangler publish",
-    "test": "jest",
+    "test": "vitest",
     "generate-wrangler": "node scripts/generate-wrangler.js",
     "register-commands": "node scripts/register-commands.js"
   },

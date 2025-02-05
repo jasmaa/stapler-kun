@@ -7,7 +7,7 @@ const fs = require('node:fs');
 
 const content = `name = "stapler-kun"
 main = "src/index.ts"
-compatibility_date = "2022-09-16"
+compatibility_date = "2022-10-31"
 node_compat = true
 
 kv_namespaces = [

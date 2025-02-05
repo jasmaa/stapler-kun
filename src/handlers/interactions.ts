@@ -1,6 +1,6 @@
 import { InteractionResponseFlags, InteractionResponseType } from 'discord-interactions';
 import { DISCORD_API_BASEURL, EXPIRATION_OFFSET_SECONDS } from '../constants';
-import { Env } from '../interfaces';
+import { Env } from '..';
 import { JsonResponse } from '../response';
 import { timestamp2key, milliseconds2text, text2lines } from '../utils';
 import bearFacts from '../bear-facts';

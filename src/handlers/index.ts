@@ -1,6 +1,6 @@
 import { InteractionResponseType, InteractionType } from "discord-interactions";
 import { DISCORD_API_BASEURL } from "../constants";
-import { Env } from "../interfaces";
+import { Env } from "..";
 import { JsonResponse } from "../response";
 import { key2timestamp } from "../utils";
 import { handleBearFactInteraction, handleGikosayInteraction, handlePinInteraction, handleStapleInteraction, handleTakeInteraction } from "./interactions";
