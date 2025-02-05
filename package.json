@@ -5,6 +5,7 @@
     "@cloudflare/vitest-pool-workers": "^0.6.12",
     "@cloudflare/workers-types": "^4.20230717.1",
     "axios": "^1.7.8",
+    "dotenv": "^16.4.7",
     "typescript": "^4.8.3",
     "vitest": "^2.1.6",
     "wrangler": "^3.3.0"
