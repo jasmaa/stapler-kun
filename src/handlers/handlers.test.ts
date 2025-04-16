@@ -312,6 +312,30 @@ describe('test handleInteraction', () => {
       expect(json.data.flags).toBeFalsy();
     });
   });
+
+  describe('test `open-bear-box`', () => {
+    it('when receive open-bear-fact command should respond with a bear box entry', async () => {
+      const req = new Request('http://localhost/', {
+        method: 'post',
+        body: JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND,
+          channel_id: channelId,
+          data: {
+            name: 'open-bear-box',
+          },
+        })
+      });
+
+      const res = await handleInteraction(req, env);
+
+      const json: any = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.data.content).not.toBeFalsy();
+      expect(json.data.embeds.length).toBe(1);
+      expect(json.data.flags).toBeFalsy();
+    });
+  });
 });
 
 describe('test handleScheduledPinRemoval', () => {

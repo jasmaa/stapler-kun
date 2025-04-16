@@ -3,7 +3,7 @@ import { DISCORD_API_BASEURL } from "../constants";
 import { Env } from "..";
 import { JsonResponse } from "../response";
 import { key2timestamp } from "../utils";
-import { handleBearFactInteraction, handleGikosayInteraction, handlePinInteraction, handleStapleInteraction, handleTakeInteraction } from "./interactions";
+import { handleBearFactInteraction, handleGikosayInteraction, handleOpenBearBoxInteraction, handlePinInteraction, handleStapleInteraction, handleTakeInteraction } from "./interactions";
 
 export function handleDefault(request: Request, env: Env) {
   return new Response(env.DISCORD_APPLICATION_ID);
@@ -11,6 +11,7 @@ export function handleDefault(request: Request, env: Env) {
 
 export async function handleInteraction(request: Request, env: Env) {
   const message: any = await request.json();
+  const url = request.url;
 
   if (message.type === InteractionType.PING) {
     // The `PING` message is used during the initial webhook handshake, and is
@@ -42,10 +43,19 @@ export async function handleInteraction(request: Request, env: Env) {
       console.log('handling gikosay request');
       return await handleGikosayInteraction(message, env);
     }
+    case 'open-bear-box': {
+      console.log('handling open-bear-box request');
+      return await handleOpenBearBoxInteraction(message, env, url);
+    }
     default:
       console.error('Unknown Command');
       return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
   }
+}
+
+export async function handleStatic(request: Request, env: Env) {
+  console.log("handling static asset fetch...");
+  return env.ASSETS.fetch(request);
 }
 
 export async function handleScheduledPinRemoval(env: Env) {

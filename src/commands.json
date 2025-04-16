@@ -26,5 +26,9 @@
         "required": true
       }
     ]
+  },
+  {
+    "name": "open-bear-box",
+    "description": "Opens a bear box"
   }
 ]

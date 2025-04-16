@@ -4,6 +4,7 @@ import { Env } from '..';
 import { JsonResponse } from '../response';
 import { timestamp2key, milliseconds2text, text2lines } from '../utils';
 import bearFacts from '../bear-facts';
+import { pullBearBox } from '../bear-box';
 
 export async function handlePinInteraction(message: any, env: Env): Promise<JsonResponse> {
   const channelId = message.channel_id;
@@ -172,5 +173,22 @@ export async function handleGikosayInteraction(message: any, env: Env): Promise<
     data: {
       content: `\`\`\`\n${content}\n\`\`\``,
     }
+  });
+}
+
+export async function handleOpenBearBoxInteraction(message: any, env: Env, workerUrl: string): Promise<JsonResponse> {
+  const entry = pullBearBox();
+  return new JsonResponse({
+    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `You got: ${entry.name} (${entry.rarity})!`,
+      embeds: [
+        {
+          image: {
+            url: `${workerUrl}${entry.imagePath}`,
+          }
+        }
+      ]
+    },
   });
 }
