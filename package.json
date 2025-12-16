@@ -13,7 +13,7 @@
   "private": true,
   "scripts": {
     "start": "wrangler dev",
-    "deploy": "wrangler publish",
+    "deploy": "wrangler deploy",
     "test": "vitest",
     "generate-wrangler": "node scripts/generate-wrangler.js",
     "register-commands": "node scripts/register-commands.js"

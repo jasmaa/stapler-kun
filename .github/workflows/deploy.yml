@@ -24,5 +24,5 @@ jobs:
       - run: yarn install --immutable --immutable-cache --check-cache
       - run: yarn generate-wrangler
       - run: yarn test
-      - run: npx wrangler publish > /dev/null
+      - run: npx wrangler deploy > /dev/null
       - run: yarn register-commands
