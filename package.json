@@ -2,12 +2,12 @@
   "name": "stapler-kun",
   "version": "0.0.0",
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.6.12",
+    "@cloudflare/vitest-pool-workers": "^0.11.0",
     "@cloudflare/workers-types": "^4.20230717.1",
     "axios": "^1.7.8",
     "dotenv": "^16.4.7",
     "typescript": "^4.8.3",
-    "vitest": "^2.1.6",
+    "vitest": "^3.2.0",
     "wrangler": "^3.3.0"
   },
   "private": true,

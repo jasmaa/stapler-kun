@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const content = `name = "stapler-kun"
 main = "src/index.ts"
 compatibility_date = "2022-10-31"
-node_compat = true
+nodejs_compat = true
 
 kv_namespaces = [
   { binding = "PINS", id = "${process.env.PINS_KV_NAMESPACE_ID}" },
