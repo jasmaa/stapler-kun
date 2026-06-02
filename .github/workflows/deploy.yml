@@ -23,6 +23,7 @@ jobs:
           node-version: "24"
       - run: yarn install --immutable --immutable-cache --check-cache
       - run: yarn generate-wrangler
+      - run: cp sample.dev.vars .dev.vars
       - run: yarn test
       - run: npx wrangler deploy > /dev/null
       - run: yarn register-commands
