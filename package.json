@@ -20,6 +20,7 @@
     "deploy": "wrangler deploy",
     "test": "prettier --check . && vitest",
     "format": "prettier --write .",
+    "cf-typegen": "wrangler types",
     "generate-wrangler": "node scripts/generate-wrangler.cjs",
     "register-commands": "node scripts/register-commands.cjs"
   },

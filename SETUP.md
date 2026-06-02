@@ -73,7 +73,7 @@ Create `.dev.vars` from `sample.dev.vars` and fill with appropriate values.
 Generate types with:
 
 ```
-wrangler types
+yarn cf-typegen
 ```
 
 ## Register commands

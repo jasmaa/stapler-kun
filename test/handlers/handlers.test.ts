@@ -22,7 +22,7 @@ import {
 } from "../../src/handlers";
 import { server } from "../server";
 
-async function clearKVNamespace(kv: any) {
+async function clearKVNamespace(kv: KVNamespace) {
   const listRes = await kv.list();
   for (const key of listRes.keys) {
     await kv.delete(key.name);
