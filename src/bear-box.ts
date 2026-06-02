@@ -1,8 +1,8 @@
 interface BearBoxEntry {
-  name: string
-  rarity: string
-  chanceWeight: number
-  imagePath: string
+  name: string;
+  rarity: string;
+  chanceWeight: number;
+  imagePath: string;
 }
 
 const bearBoxEntries: BearBoxEntry[] = [
@@ -70,7 +70,8 @@ export function pullBearBox(): BearBoxEntry {
     cumWeights.push(acc);
   }
 
-  const totalChanceWeight = bearBoxEntries.map((entry) => entry.chanceWeight)
+  const totalChanceWeight = bearBoxEntries
+    .map((entry) => entry.chanceWeight)
     .reduce((acc, v) => acc + v, 0);
 
   const v = Math.random() * totalChanceWeight;

@@ -2,8 +2,8 @@
  * Generates `wrangler.toml` from env vars.
  */
 
-require('dotenv').config();
-const fs = require('node:fs');
+require("dotenv").config();
+const fs = require("node:fs");
 
 const content = `name = "stapler-kun"
 main = "src/index.ts"
@@ -25,4 +25,4 @@ enabled = true
 directory = "./assets"
 binding = "ASSETS"`;
 
-fs.writeFileSync('wrangler.toml', content);
+fs.writeFileSync("wrangler.toml", content);

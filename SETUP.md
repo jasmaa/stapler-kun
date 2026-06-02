@@ -3,7 +3,6 @@
 Adapted from:
 https://discord.com/developers/docs/tutorials/hosting-on-cloudflare-workers
 
-
 ## Create Discord bot
 
 Go to [Discord Developer Dashboard](https://discord.com/developers/applications)
@@ -15,7 +14,6 @@ and `DISCORD_PUBLIC_KEY` respectively.
 Go to the Bot tab and create a bot.
 
 Save the token for the bot. This will be `DISCORD_TOKEN`.
-
 
 ## Setup bot permissions
 
@@ -33,7 +31,6 @@ Check the following under Bot Permissions:
 - `Use Slash Commands`
 
 Go to the generated URL and invite the bot to your server.
-
 
 ## Setup secrets and KV namespaces
 

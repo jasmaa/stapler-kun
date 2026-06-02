@@ -1,9 +1,25 @@
-import { InteractionResponseFlags, InteractionResponseType, InteractionType } from "discord-interactions";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  InteractionResponseFlags,
+  InteractionResponseType,
+  InteractionType,
+} from "discord-interactions";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { env } from "cloudflare:workers";
 import { http, HttpResponse } from "msw";
 import { timestamp2key } from "../../src/utils";
-import { handleDefault, handleInteraction, handleScheduledPinRemoval } from "../../src/handlers";
+import {
+  handleDefault,
+  handleInteraction,
+  handleScheduledPinRemoval,
+} from "../../src/handlers";
 import { server } from "../server";
 
 async function clearKVNamespace(kv: any) {
@@ -31,9 +47,9 @@ afterEach(async () => {
 });
 afterAll(() => server.close());
 
-describe('test handleDefault', () => {
-  it('should return response', async () => {
-    const req = new Request('http://localhost/');
+describe("test handleDefault", () => {
+  it("should return response", async () => {
+    const req = new Request("http://localhost/");
 
     const res = await handleDefault(req, env);
 
@@ -43,17 +59,17 @@ describe('test handleDefault', () => {
   });
 });
 
-describe('test handleInteraction', () => {
-  const guildId = 'guild000';
-  const channelId = 'channelId123';
-  const messageId = 'messageId456';
+describe("test handleInteraction", () => {
+  const guildId = "guild000";
+  const channelId = "channelId123";
+  const messageId = "messageId456";
 
-  it('when receive PING should respond PONG', async () => {
-    const req = new Request('http://localhost/', {
-      method: 'post',
+  it("when receive PING should respond PONG", async () => {
+    const req = new Request("http://localhost/", {
+      method: "post",
       body: JSON.stringify({
-        type: InteractionType.PING
-      })
+        type: InteractionType.PING,
+      }),
     });
 
     const res = await handleInteraction(req, env);
@@ -63,108 +79,129 @@ describe('test handleInteraction', () => {
     expect(json.type).toBe(InteractionResponseType.PONG);
   });
 
-  describe('test `pin`', () => {
-    it('when receive pin command should pin previous message', async () => {
+  describe("test `pin`", () => {
+    it("when receive pin command should pin previous message", async () => {
       server.use(
         http.get(
           `https://discord.com/api/v10/channels/${channelId}/messages`,
           () => {
-            return HttpResponse.json([{
-              id: messageId,
-            }], { status: 200 });
-          }
+            return HttpResponse.json(
+              [
+                {
+                  id: messageId,
+                },
+              ],
+              { status: 200 },
+            );
+          },
         ),
-        http.put(`https://discord.com/api/v10/channels/${channelId}/pins/${messageId}`, () => {
-          return HttpResponse.json({}, { status: 204 });
-        }),
+        http.put(
+          `https://discord.com/api/v10/channels/${channelId}/pins/${messageId}`,
+          () => {
+            return HttpResponse.json({}, { status: 204 });
+          },
+        ),
       );
 
-      const req = new Request('http://localhost/', {
-        method: 'post',
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           channel_id: channelId,
           data: {
-            name: 'pin',
+            name: "pin",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('Done, boss!');
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe("Done, boss!");
       expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
 
       const listRes = await env.PINS.list();
       expect(listRes.keys.length).toBe(1);
     });
 
-    it('when receive pin command when no messages should respond with error', async () => {
+    it("when receive pin command when no messages should respond with error", async () => {
       server.use(
         http.get(
           `https://discord.com/api/v10/channels/${channelId}/messages`,
           () => {
             return HttpResponse.json([], { status: 200 });
-          }
+          },
         ),
       );
 
-      const req = new Request('http://localhost/', {
-        method: 'post',
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           channel_id: channelId,
           data: {
-            name: 'pin',
+            name: "pin",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('Could not pin message. No messages to pin.');
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe(
+        "Could not pin message. No messages to pin.",
+      );
       expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
 
       const listRes = await env.PINS.list();
       expect(listRes.keys.length).toBe(0);
     });
 
-    it('when receive pin command when channel not found should respond with error', async () => {
+    it("when receive pin command when channel not found should respond with error", async () => {
       server.use(
         http.get(
           `https://discord.com/api/v10/channels/${channelId}/messages`,
           () => {
             return HttpResponse.json({}, { status: 400 });
-          }
+          },
         ),
-        http.put(`https://discord.com/api/v10/channels/${channelId}/pins/${messageId}`, () => {
-          return HttpResponse.json({}, { status: 204 });
-        })
+        http.put(
+          `https://discord.com/api/v10/channels/${channelId}/pins/${messageId}`,
+          () => {
+            return HttpResponse.json({}, { status: 204 });
+          },
+        ),
       );
 
-      const req = new Request('http://localhost/', {
-        method: 'post',
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           channel_id: channelId,
           data: {
-            name: 'pin',
+            name: "pin",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('Could not pin message. Ran into an error...');
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe(
+        "Could not pin message. Ran into an error...",
+      );
       expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
 
       const listRes = await env.PINS.list();
@@ -172,242 +209,274 @@ describe('test handleInteraction', () => {
     });
   });
 
-  describe('test `take`', () => {
-    it('when receive take command when no owner should let sender take stapler', async () => {
-      const req = new Request('http://localhost/', {
-        method: 'post',
+  describe("test `take`", () => {
+    it("when receive take command when no owner should let sender take stapler", async () => {
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           guild_id: guildId,
           channel_id: channelId,
-          member: { user: { username: 'alice' } },
+          member: { user: { username: "alice" } },
           data: {
-            name: 'take',
+            name: "take",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('alice has taken the stapler!')
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe("alice has taken the stapler!");
       expect(json.data.flags).toBeFalsy();
 
       const getRes = await env.OWNERS.get(guildId);
       expect(getRes).toBeTruthy();
     });
 
-    it('when receive take command when sender is not owner should let sender take stapler from owner', async () => {
-      await env.OWNERS.put(guildId, JSON.stringify({
-        username: 'alice',
-        time: 0,
-      }));
+    it("when receive take command when sender is not owner should let sender take stapler from owner", async () => {
+      await env.OWNERS.put(
+        guildId,
+        JSON.stringify({
+          username: "alice",
+          time: 0,
+        }),
+      );
       const diff = Date.now(); // Date.now() - 0
 
-      const req = new Request('http://localhost/', {
-        method: 'post',
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           guild_id: guildId,
           channel_id: channelId,
-          member: { user: { username: 'bob' } },
+          member: { user: { username: "bob" } },
           data: {
-            name: 'take',
+            name: "take",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toContain(`bob has taken the stapler from alice! alice had the stapler for`)
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toContain(
+        `bob has taken the stapler from alice! alice had the stapler for`,
+      );
       expect(json.data.flags).toBeFalsy();
     });
 
-    it('when receive take command when sender is already owner should tell sender that they are owner', async () => {
-      await env.OWNERS.put(guildId, JSON.stringify({
-        username: 'alice',
-        time: 0,
-      }));
+    it("when receive take command when sender is already owner should tell sender that they are owner", async () => {
+      await env.OWNERS.put(
+        guildId,
+        JSON.stringify({
+          username: "alice",
+          time: 0,
+        }),
+      );
 
-      const req = new Request('http://localhost/', {
-        method: 'post',
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           guild_id: guildId,
           channel_id: channelId,
-          member: { user: { username: 'alice' } },
+          member: { user: { username: "alice" } },
           data: {
-            name: 'take',
+            name: "take",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('You already have the stapler...')
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe("You already have the stapler...");
       expect(json.data.flags).toBe(InteractionResponseFlags.EPHEMERAL);
     });
 
-    it('when receive take command when different owner in another guild should not affect other guild', async () => {
-      const otherGuildId = 'gamingFunClub000';
-      await env.OWNERS.put(otherGuildId, JSON.stringify({
-        username: 'barbatos',
-        time: 0,
-      }));
+    it("when receive take command when different owner in another guild should not affect other guild", async () => {
+      const otherGuildId = "gamingFunClub000";
+      await env.OWNERS.put(
+        otherGuildId,
+        JSON.stringify({
+          username: "barbatos",
+          time: 0,
+        }),
+      );
 
-      const req = new Request('http://localhost/', {
-        method: 'post',
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           guild_id: guildId,
           channel_id: channelId,
-          member: { user: { username: 'alice' } },
+          member: { user: { username: "alice" } },
           data: {
-            name: 'take',
+            name: "take",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('alice has taken the stapler!')
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe("alice has taken the stapler!");
       expect(json.data.flags).toBeFalsy();
 
       const getRes1 = await env.OWNERS.get(guildId);
       expect(getRes1).toBeTruthy();
-      const getRes2 = await env.OWNERS.get(otherGuildId, { type: 'json' }) as { username: string, time: number };
-      expect(getRes2.username).not.toBe('alice');
+      const getRes2 = (await env.OWNERS.get(otherGuildId, {
+        type: "json",
+      })) as { username: string; time: number };
+      expect(getRes2.username).not.toBe("alice");
     });
   });
 
-  describe('test `staple`', () => {
-    it('when receive staple command should stable', async () => {
-      const req = new Request('http://localhost/', {
-        method: 'post',
+  describe("test `staple`", () => {
+    it("when receive staple command should stable", async () => {
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           channel_id: channelId,
           data: {
-            name: 'staple',
+            name: "staple",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
-      expect(json.data.content).toBe('[stable](https://www.youtube.com/watch?v=YG2_wmWc_QY)')
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
+      expect(json.data.content).toBe(
+        "[stable](https://www.youtube.com/watch?v=YG2_wmWc_QY)",
+      );
       expect(json.data.flags).toBeFalsy();
     });
   });
 
-  describe('test `bear-fact`', () => {
-    it('when receive bear-fact command should respond with bear fact', async () => {
-      const req = new Request('http://localhost/', {
-        method: 'post',
+  describe("test `bear-fact`", () => {
+    it("when receive bear-fact command should respond with bear fact", async () => {
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           channel_id: channelId,
           data: {
-            name: 'bear-fact',
+            name: "bear-fact",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
       expect(json.data.content).not.toBeFalsy();
       expect(json.data.flags).toBeFalsy();
     });
   });
 
-  describe('test `open-bear-box`', () => {
-    it('when receive open-bear-fact command should respond with a bear box entry', async () => {
-      const req = new Request('http://localhost/', {
-        method: 'post',
+  describe("test `open-bear-box`", () => {
+    it("when receive open-bear-fact command should respond with a bear box entry", async () => {
+      const req = new Request("http://localhost/", {
+        method: "post",
         body: JSON.stringify({
           type: InteractionType.APPLICATION_COMMAND,
           channel_id: channelId,
           data: {
-            name: 'open-bear-box',
+            name: "open-bear-box",
           },
-        })
+        }),
       });
 
       const res = await handleInteraction(req, env);
 
       const json: any = await res.json();
       expect(res.status).toBe(200);
-      expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+      expect(json.type).toBe(
+        InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      );
       expect(json.data.content).not.toBeFalsy();
       expect(json.data.embeds.length).toBe(1);
       expect(json.data.flags).toBeFalsy();
     });
   });
 
-  describe('test handleScheduledPinRemoval', () => {
+  describe("test handleScheduledPinRemoval", () => {
     const records = [
       {
         // expired
         timestamp: 915235200000, // UNIX epoch in milliseconds
-        channelId: 'channelId123',
-        messageId: 'messageId123'
+        channelId: "channelId123",
+        messageId: "messageId123",
       },
       {
         // expired
         timestamp: 1081555200000,
-        channelId: 'channelId123',
-        messageId: 'messageId123'
+        channelId: "channelId123",
+        messageId: "messageId123",
       },
       {
         // not expired
         timestamp: 1664236800000,
-        channelId: 'channelId123',
-        messageId: 'messageId123'
+        channelId: "channelId123",
+        messageId: "messageId123",
       },
       {
         // not expired
         timestamp: 3475440000000,
-        channelId: 'channelId123',
-        messageId: 'messageId123'
+        channelId: "channelId123",
+        messageId: "messageId123",
       },
       {
         // expired
         timestamp: -9504000000,
-        channelId: 'channelId123',
-        messageId: 'messageId123'
+        channelId: "channelId123",
+        messageId: "messageId123",
       },
     ];
 
-    it('when namespace has single pin with expired timestamp should unpin message', async () => {
+    it("when namespace has single pin with expired timestamp should unpin message", async () => {
       const expiredRecord = records[0];
-      await env.PINS.put(timestamp2key(expiredRecord.timestamp), JSON.stringify({
-        channelId: expiredRecord.channelId,
-        messageId: expiredRecord.messageId,
-      }));
+      await env.PINS.put(
+        timestamp2key(expiredRecord.timestamp),
+        JSON.stringify({
+          channelId: expiredRecord.channelId,
+          messageId: expiredRecord.messageId,
+        }),
+      );
 
       server.use(
         http.delete(
           `https://discord.com/api/v10/channels/${expiredRecord.channelId}/pins/${expiredRecord.messageId}`,
           () => {
             return HttpResponse.json({}, { status: 204 });
-          }
+          },
         ),
       );
 
@@ -419,30 +488,35 @@ describe('test handleInteraction', () => {
       expect(listRes.keys.length).toBe(0);
     });
 
-    it('when namespace has no pins should not unpin', async () => {
+    it("when namespace has no pins should not unpin", async () => {
       await handleScheduledPinRemoval(env);
 
       const listRes = await env.PINS.list();
       expect(listRes.keys.length).toBe(0);
     });
 
-    it('when namespace has multiple pins with non-expired timestamps should not unpin', async () => {
+    it("when namespace has multiple pins with non-expired timestamps should not unpin", async () => {
       for (const record of records) {
         if (record.timestamp >= Date.now()) {
-          await env.PINS.put(timestamp2key(record.timestamp), JSON.stringify({
-            channelId: record.channelId,
-            messageId: record.messageId,
-          }));
+          await env.PINS.put(
+            timestamp2key(record.timestamp),
+            JSON.stringify({
+              channelId: record.channelId,
+              messageId: record.messageId,
+            }),
+          );
         }
       }
 
       server.use(
-        ...records.map((record) => http.delete(
-          `https://discord.com/api/v10/channels/${record.channelId}/pins/${record.messageId}`,
-          () => {
-            return HttpResponse.json({}, { status: 204 });
-          }
-        )),
+        ...records.map((record) =>
+          http.delete(
+            `https://discord.com/api/v10/channels/${record.channelId}/pins/${record.messageId}`,
+            () => {
+              return HttpResponse.json({}, { status: 204 });
+            },
+          ),
+        ),
       );
 
       await handleScheduledPinRemoval(env);
@@ -451,21 +525,26 @@ describe('test handleInteraction', () => {
       expect(listRes.keys.length).toBe(2);
     });
 
-    it('when namespace has multiple pins with non-expired and expired timestamps should unpin expired', async () => {
+    it("when namespace has multiple pins with non-expired and expired timestamps should unpin expired", async () => {
       for (const record of records) {
-        await env.PINS.put(timestamp2key(record.timestamp), JSON.stringify({
-          channelId: record.channelId,
-          messageId: record.messageId,
-        }));
+        await env.PINS.put(
+          timestamp2key(record.timestamp),
+          JSON.stringify({
+            channelId: record.channelId,
+            messageId: record.messageId,
+          }),
+        );
       }
 
       server.use(
-        ...records.map((record) => http.delete(
-          `https://discord.com/api/v10/channels/${record.channelId}/pins/${record.messageId}`,
-          () => {
-            return HttpResponse.json({}, { status: 204 });
-          }
-        )),
+        ...records.map((record) =>
+          http.delete(
+            `https://discord.com/api/v10/channels/${record.channelId}/pins/${record.messageId}`,
+            () => {
+              return HttpResponse.json({}, { status: 204 });
+            },
+          ),
+        ),
       );
 
       await handleScheduledPinRemoval(env);

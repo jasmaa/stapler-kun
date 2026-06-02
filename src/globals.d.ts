@@ -1,12 +1,12 @@
 declare global {
   function getMiniflareBindings<Bindings = Context>(): Bindings;
   function getMiniflareDurableObjectStorage(
-    id: DurableObjectId
+    id: DurableObjectId,
   ): Promise<DurableObjectStorage>;
   function getMiniflareFetchMock(): MockAgent;
   function flushMiniflareDurableObjectAlarms(
-    ids: DurableObjectId[]
+    ids: DurableObjectId[],
   ): Promise<void>;
 }
 
-export { };
+export {};

@@ -9,6 +9,7 @@
     "axios": "^1.7.8",
     "dotenv": "^16.4.7",
     "msw": "^2.14.6",
+    "prettier": "^3.8.3",
     "typescript": "^4.8.3",
     "vitest": "^4.1.0",
     "wrangler": "^4.55.0"
@@ -17,7 +18,8 @@
   "scripts": {
     "start": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "vitest",
+    "test": "prettier --check . && vitest",
+    "format": "prettier --write .",
     "generate-wrangler": "node scripts/generate-wrangler.cjs",
     "register-commands": "node scripts/register-commands.cjs"
   },

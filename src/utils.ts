@@ -16,7 +16,7 @@ export function timestamp2key(timestamp: number) {
 export function key2timestamp(key: string) {
   const timestamp = parseInt(key);
   if (timestamp < 0 || timestamp > MAX_INT) {
-    throw new Error('timestamp is out of range');
+    throw new Error("timestamp is out of range");
   }
   return timestamp;
 }
@@ -28,15 +28,15 @@ export function milliseconds2text(milliseconds: number) {
 
   const timeUnitsConfig = [
     {
-      name: 'hour',
+      name: "hour",
       msPerTimeUnit: msPerHour,
     },
     {
-      name: 'minute',
+      name: "minute",
       msPerTimeUnit: msPerMinute,
     },
     {
-      name: 'second',
+      name: "second",
       msPerTimeUnit: msPerSecond,
     },
   ];
@@ -55,7 +55,7 @@ export function milliseconds2text(milliseconds: number) {
       return {
         name: timeUnitsConfig[i].name,
         time: v,
-      }
+      };
     })
     .filter(({ time }) => time > 0)
     .map(({ time, name }) => `${time} ${name}(s)`);
@@ -67,19 +67,24 @@ export function milliseconds2text(milliseconds: number) {
   } else if (textChunks.length === 2) {
     return `${textChunks[0]} and ${textChunks[1]}`;
   } else {
-    return textChunks.slice(0, textChunks.length - 1).join(', ') + `, and ${textChunks[textChunks.length - 1]}`;
+    return (
+      textChunks.slice(0, textChunks.length - 1).join(", ") +
+      `, and ${textChunks[textChunks.length - 1]}`
+    );
   }
 }
 
 export function text2lines(text: string, lineBreak: number): string[] {
-  const words = text.split(' ');
+  const words = text.split(" ");
   const lines: string[] = [];
   let line: string[] = [];
   for (const w of words) {
     const updatedLine = [...line, w];
-    const updatedLineLen = updatedLine.map((w) => w.length).reduce((a, b) => a + b, 0) + Math.max(updatedLine.length - 1, 0);
+    const updatedLineLen =
+      updatedLine.map((w) => w.length).reduce((a, b) => a + b, 0) +
+      Math.max(updatedLine.length - 1, 0);
     if (updatedLineLen > lineBreak) {
-      lines.push(line.join(' '));
+      lines.push(line.join(" "));
       line = [];
     }
     const subLines = word2lines(w, lineBreak);
@@ -91,7 +96,7 @@ export function text2lines(text: string, lineBreak: number): string[] {
     }
   }
   if (line.length > 0) {
-    lines.push(line.join(' '));
+    lines.push(line.join(" "));
   }
   return lines;
 }
@@ -110,5 +115,5 @@ function word2lines(text: string, lineBreak: number): string[] {
   if (p < q) {
     lines.push(text.slice(p, q));
   }
-  return lines
+  return lines;
 }
