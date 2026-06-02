@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { milliseconds2text, text2lines } from "./utils";
+import { milliseconds2text, text2lines } from "../src/utils";
 
 function timeConfig2milliseconds({
   hours,

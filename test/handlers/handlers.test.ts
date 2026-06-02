@@ -1,21 +1,35 @@
 import { InteractionResponseFlags, InteractionResponseType, InteractionType } from "discord-interactions";
-import { beforeAll, describe, expect, it, vi } from "vitest";
-import { env, fetchMock } from "cloudflare:test";
-import { Env } from "..";
-import { timestamp2key } from "../utils";
-import { handleDefault, handleInteraction, handleScheduledPinRemoval } from ".";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { env } from "cloudflare:workers";
+import { http, HttpResponse } from "msw";
+import { timestamp2key } from "../../src/utils";
+import { handleDefault, handleInteraction, handleScheduledPinRemoval } from "../../src/handlers";
+import { server } from "../server";
 
-declare module "cloudflare:test" {
-  interface ProvidedEnv extends Env { }
+async function clearKVNamespace(kv: any) {
+  const listRes = await kv.list();
+  for (const key of listRes.keys) {
+    await kv.delete(key.name);
+  }
 }
 
 beforeAll(() => {
   vi.useFakeTimers();
   vi.setSystemTime(1663516715115);
 
-  fetchMock.activate();
-  fetchMock.disableNetConnect();
+  server.listen({
+    onUnhandledRequest: "error",
+  });
 });
+
+afterEach(async () => {
+  server.resetHandlers();
+
+  // Clear KV namespaces
+  await clearKVNamespace(env.PINS);
+  await clearKVNamespace(env.OWNERS);
+});
+afterAll(() => server.close());
 
 describe('test handleDefault', () => {
   it('should return response', async () => {
@@ -51,17 +65,19 @@ describe('test handleInteraction', () => {
 
   describe('test `pin`', () => {
     it('when receive pin command should pin previous message', async () => {
-      const origin = fetchMock.get('https://discord.com');
-      origin
-        .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
-        .reply(200, [
-          {
-            id: messageId,
+      server.use(
+        http.get(
+          `https://discord.com/api/v10/channels/${channelId}/messages`,
+          () => {
+            return HttpResponse.json([{
+              id: messageId,
+            }], { status: 200 });
           }
-        ]);
-      origin
-        .intercept({ path: `/api/v10/channels/${channelId}/pins/${messageId}`, method: 'PUT' })
-        .reply(204);
+        ),
+        http.put(`https://discord.com/api/v10/channels/${channelId}/pins/${messageId}`, () => {
+          return HttpResponse.json({}, { status: 204 });
+        }),
+      );
 
       const req = new Request('http://localhost/', {
         method: 'post',
@@ -87,10 +103,14 @@ describe('test handleInteraction', () => {
     });
 
     it('when receive pin command when no messages should respond with error', async () => {
-      const origin = fetchMock.get('https://discord.com');
-      origin
-        .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
-        .reply(200, []);
+      server.use(
+        http.get(
+          `https://discord.com/api/v10/channels/${channelId}/messages`,
+          () => {
+            return HttpResponse.json([], { status: 200 });
+          }
+        ),
+      );
 
       const req = new Request('http://localhost/', {
         method: 'post',
@@ -116,13 +136,17 @@ describe('test handleInteraction', () => {
     });
 
     it('when receive pin command when channel not found should respond with error', async () => {
-      const origin = fetchMock.get('https://discord.com');
-      origin
-        .intercept({ path: `/api/v10/channels/${channelId}/messages`, method: 'GET' })
-        .reply(404, {});
-      origin
-        .intercept({ path: `/api/v10/channels/${channelId}/pins/${messageId}`, method: 'PUT' })
-        .reply(204);
+      server.use(
+        http.get(
+          `https://discord.com/api/v10/channels/${channelId}/messages`,
+          () => {
+            return HttpResponse.json({}, { status: 400 });
+          }
+        ),
+        http.put(`https://discord.com/api/v10/channels/${channelId}/pins/${messageId}`, () => {
+          return HttpResponse.json({}, { status: 204 });
+        })
+      );
 
       const req = new Request('http://localhost/', {
         method: 'post',
@@ -336,110 +360,118 @@ describe('test handleInteraction', () => {
       expect(json.data.flags).toBeFalsy();
     });
   });
-});
 
-describe('test handleScheduledPinRemoval', () => {
-  const records = [
-    {
-      // expired
-      timestamp: 915235200000, // UNIX epoch in milliseconds
-      channelId: 'channelId123',
-      messageId: 'messageId123'
-    },
-    {
-      // expired
-      timestamp: 1081555200000,
-      channelId: 'channelId123',
-      messageId: 'messageId123'
-    },
-    {
-      // not expired
-      timestamp: 1664236800000,
-      channelId: 'channelId123',
-      messageId: 'messageId123'
-    },
-    {
-      // not expired
-      timestamp: 3475440000000,
-      channelId: 'channelId123',
-      messageId: 'messageId123'
-    },
-    {
-      // expired
-      timestamp: -9504000000,
-      channelId: 'channelId123',
-      messageId: 'messageId123'
-    },
-  ];
+  describe('test handleScheduledPinRemoval', () => {
+    const records = [
+      {
+        // expired
+        timestamp: 915235200000, // UNIX epoch in milliseconds
+        channelId: 'channelId123',
+        messageId: 'messageId123'
+      },
+      {
+        // expired
+        timestamp: 1081555200000,
+        channelId: 'channelId123',
+        messageId: 'messageId123'
+      },
+      {
+        // not expired
+        timestamp: 1664236800000,
+        channelId: 'channelId123',
+        messageId: 'messageId123'
+      },
+      {
+        // not expired
+        timestamp: 3475440000000,
+        channelId: 'channelId123',
+        messageId: 'messageId123'
+      },
+      {
+        // expired
+        timestamp: -9504000000,
+        channelId: 'channelId123',
+        messageId: 'messageId123'
+      },
+    ];
 
-  it('when namespace has single pin with expired timestamp should unpin message', async () => {
-    const expiredRecord = records[0];
-    await env.PINS.put(timestamp2key(expiredRecord.timestamp), JSON.stringify({
-      channelId: expiredRecord.channelId,
-      messageId: expiredRecord.messageId,
-    }));
+    it('when namespace has single pin with expired timestamp should unpin message', async () => {
+      const expiredRecord = records[0];
+      await env.PINS.put(timestamp2key(expiredRecord.timestamp), JSON.stringify({
+        channelId: expiredRecord.channelId,
+        messageId: expiredRecord.messageId,
+      }));
 
-    const origin = fetchMock.get('https://discord.com');
-    origin
-      .intercept({ path: `/api/v10/channels/${expiredRecord.channelId}/pins/${expiredRecord.messageId}`, method: 'DELETE' })
-      .reply(204);
+      server.use(
+        http.delete(
+          `https://discord.com/api/v10/channels/${expiredRecord.channelId}/pins/${expiredRecord.messageId}`,
+          () => {
+            return HttpResponse.json({}, { status: 204 });
+          }
+        ),
+      );
 
-    await handleScheduledPinRemoval(env);
+      await handleScheduledPinRemoval(env);
 
-    expect(expiredRecord.timestamp <= Date.now());
+      expect(expiredRecord.timestamp <= Date.now());
 
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(0);
-  });
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(0);
+    });
 
-  it('when namespace has no pins should not unpin', async () => {
-    await handleScheduledPinRemoval(env);
+    it('when namespace has no pins should not unpin', async () => {
+      await handleScheduledPinRemoval(env);
 
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(0);
-  });
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(0);
+    });
 
-  it('when namespace has multiple pins with non-expired timestamps should not unpin', async () => {
-    for (const record of records) {
-      if (record.timestamp >= Date.now()) {
+    it('when namespace has multiple pins with non-expired timestamps should not unpin', async () => {
+      for (const record of records) {
+        if (record.timestamp >= Date.now()) {
+          await env.PINS.put(timestamp2key(record.timestamp), JSON.stringify({
+            channelId: record.channelId,
+            messageId: record.messageId,
+          }));
+        }
+      }
+
+      server.use(
+        ...records.map((record) => http.delete(
+          `https://discord.com/api/v10/channels/${record.channelId}/pins/${record.messageId}`,
+          () => {
+            return HttpResponse.json({}, { status: 204 });
+          }
+        )),
+      );
+
+      await handleScheduledPinRemoval(env);
+
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(2);
+    });
+
+    it('when namespace has multiple pins with non-expired and expired timestamps should unpin expired', async () => {
+      for (const record of records) {
         await env.PINS.put(timestamp2key(record.timestamp), JSON.stringify({
           channelId: record.channelId,
           messageId: record.messageId,
         }));
       }
-    }
 
-    const origin = fetchMock.get('https://discord.com');
-    for (const record of records) {
-      origin
-        .intercept({ path: `/api/v10/channels/${record.channelId}/pins/${record.messageId}`, method: 'DELETE' })
-        .reply(204);
-    }
+      server.use(
+        ...records.map((record) => http.delete(
+          `https://discord.com/api/v10/channels/${record.channelId}/pins/${record.messageId}`,
+          () => {
+            return HttpResponse.json({}, { status: 204 });
+          }
+        )),
+      );
 
-    await handleScheduledPinRemoval(env);
+      await handleScheduledPinRemoval(env);
 
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(2);
-  });
-
-  it('when namespace has multiple pins with non-expired and expired timestamps should unpin expired', async () => {
-    for (const record of records) {
-      await env.PINS.put(timestamp2key(record.timestamp), JSON.stringify({
-        channelId: record.channelId,
-        messageId: record.messageId,
-      }));
-    }
-
-    const origin = fetchMock.get('https://discord.com');
-    for (const record of records) {
-      origin
-        .intercept({ path: `/api/v10/channels/${record.channelId}/pins/${record.messageId}`, method: 'DELETE' })
-        .reply(204);
-    }
-
-    await handleScheduledPinRemoval(env);
-
-    const listRes = await env.PINS.list();
-    expect(listRes.keys.length).toBe(2);
+      const listRes = await env.PINS.list();
+      expect(listRes.keys.length).toBe(2);
+    });
   });
 });

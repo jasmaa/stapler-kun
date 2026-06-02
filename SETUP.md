@@ -43,9 +43,11 @@ Login to Cloudflare with:
 wrangler login
 ```
 
-Store `DISCORD_TOKEN` to secrets:
+Store `DISCORD_APPLICATION_ID`, `DISCORD_PUBLIC_KEY`, and `DISCORD_TOKEN` to secrets:
 
 ```
+wrangler secret put DISCORD_APPLICATION_ID
+wrangler secret put DISCORD_PUBLIC_KEY
 wrangler secret put DISCORD_TOKEN
 ```
 
@@ -61,6 +63,21 @@ Create `OWNERS` namespaces. The id will be `OWNERS_KV_NAMESPACE_ID`:
 wrangler kv:namespace create OWNERS
 ```
 
+## Setup dev environment
+
+Create `wrangler.toml` with:
+
+```
+yarn generate-wrangler
+```
+
+Create `.dev.vars` from `sample.dev.vars` and fill with appropriate values.
+
+Generate types with:
+
+```
+wrangler types
+```
 
 ## Register commands
 
@@ -72,14 +89,7 @@ In the repository root, run:
 yarn register-commands
 ```
 
-
 ## Deploy Cloudflare worker
-
-Create `wrangler.toml` with:
-
-```
-yarn generate-wrangler
-```
 
 Deploy worker with:
 

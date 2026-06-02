@@ -23,10 +23,6 @@ enabled = true
 
 [assets]
 directory = "./assets"
-binding = "ASSETS"
-
-[vars]
-DISCORD_APPLICATION_ID = "${process.env.DISCORD_APPLICATION_ID}"
-DISCORD_PUBLIC_KEY = "${process.env.DISCORD_PUBLIC_KEY}"`;
+binding = "ASSETS"`;
 
 fs.writeFileSync('wrangler.toml', content);
